@@ -1,0 +1,9 @@
+{
+  "controllers": {
+    "easingfunction": "easeOutQuad",
+    "duration": 500,
+    "color": "#6e9fc4",
+    "alpha": 80
+  },
+  "folders": {}
+}
