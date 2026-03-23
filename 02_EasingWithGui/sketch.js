@@ -12,6 +12,7 @@ const params = {
   color: "#ff0000",
   duration: 1000,
   rotation: 0,
+  diameter: 200,
 };
 
 function setup() {
@@ -32,6 +33,11 @@ function setup() {
   gui.add(params, "duration");
   gui.addColor(params, "color");
   gui.add(params, "rotation", 0, 360, 10);
+
+  gui.add(params, "diameter", 0, height).onFinishChange((value) => {
+    console.log("Done sliding:", value);
+    updateValue(value);
+  });
 }
 
 function draw() {
@@ -61,6 +67,12 @@ function keyPressed() {
     saveJSON(gui.save(), "settings");
   }
   if (key == "l") loadSettings();
+}
+
+function updateValue(value) {
+  startValue = myRad;
+  endValue = value;
+  startTime = millis();
 }
 
 async function loadSettings() {
