@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sketch Controller</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <link rel="stylesheet" href="gui-native.css" />
+  </head>
+  <body>
+    <div class="controller">
+      <!-- Header + connection status -->
+      <div class="controller-header">
+        <span class="controller-title">Sketch Controller</span>
+        <span class="status">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">disconnected</span>
+        </span>
+      </div>
+
+      <!-- Easing function -->
+      <div class="row">
+        <span class="row-label">easing</span>
+        <div class="row-control">
+          <select id="easingfunction"></select>
+        </div>
+      </div>
+
+      <!-- Duration -->
+      <div class="row">
+        <span class="row-label">duration</span>
+        <div class="row-control">
+          <input type="range" id="duration" min="100" max="3000" step="50" value="1000" />
+          <span class="row-value" id="duration-val">1000</span>
+        </div>
+      </div>
+
+      <!-- Color -->
+      <div class="row">
+        <span class="row-label">color</span>
+        <div class="row-control">
+          <input type="color" id="color" value="#ff0000" />
+          <span class="color-hex" id="color-val">#ff0000</span>
+        </div>
+      </div>
+
+      <!-- Rotation -->
+      <div class="row">
+        <span class="row-label">rotation</span>
+        <div class="row-control">
+          <input type="range" id="rotation" min="0" max="360" step="10" value="0" />
+          <span class="row-value" id="rotation-val">0°</span>
+        </div>
+      </div>
+
+      <!-- Diameter -->
+      <div class="row">
+        <span class="row-label">diameter</span>
+        <div class="row-control">
+          <input type="range" id="diameter" min="0" max="800" step="1" value="200" />
+          <span class="row-value" id="diameter-val">200</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ── 1. Socket connection ───────────────────────────────────────────────
+      const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+      const SERVER_URL = isLocal ? "http://localhost:8080" : window.location.origin;
+      const socket = io(SERVER_URL);
+
+      socket.on("connect", () => {
+        dot.className = "status-dot connected";
+        text.textContent = "connected";
+      });
+      socket.on("disconnect", () => {
+        dot.className = "status-dot";
+        text.textContent = "disconnected";
+      });
+      socket.on("connect_error", () => {
+        dot.className = "status-dot error";
+        text.textContent = "error";
+      });
+
+      const dot = document.getElementById("status-dot");
+      const text = document.getElementById("status-text");
+
+      // ── 2. Easing dropdown ─────────────────────────────────────────────────
+      const easingNames = [
+        "easeLinear",
+        "easeInQuad",
+        "easeOutQuad",
+        "easeInOutQuad",
+        "easeInCubic",
+        "easeOutCubic",
+        "easeInOutCubic",
+        "easeInQuartic",
+        "easeOutQuartic",
+        "easeInOutQuartic",
+        "easeInQuintic",
+        "easeOutQuintic",
+        "easeInOutQuintic",
+        "easeInSine",
+        "easeOutSine",
+        "easeInOutSine",
+        "easeInExpo",
+        "easeOutExpo",
+        "easeInOutExpo",
+        "easeInCirc",
+        "easeOutCirc",
+        "easeInOutCirc",
+        "easeInElastic",
+        "easeOutElastic",
+        "easeInOutElastic",
+        "easeInBack",
+        "easeOutBack",
+        "easeInOutBack",
+        "easeInBounce",
+        "easeOutBounce",
+        "easeInOutBounce",
+      ];
+
+      const select = document.getElementById("easingfunction");
+      easingNames.forEach((name) => {
+        const opt = document.createElement("option");
+        opt.value = opt.textContent = name;
+        if (name === "easeOutQuad") opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      // ── 3. Controls ────────────────────────────────────────────────────────
+      document.getElementById("easingfunction").addEventListener("input", function () {
+        socket.emit("easingfunction", this.value);
+      });
+
+      document.getElementById("duration").addEventListener("input", function () {
+        document.getElementById("duration-val").textContent = this.value;
+        socket.emit("duration", Number(this.value));
+      });
+
+      document.getElementById("color").addEventListener("input", function () {
+        document.getElementById("color-val").textContent = this.value;
+        socket.emit("color", this.value);
+      });
+
+      document.getElementById("rotation").addEventListener("input", function () {
+        document.getElementById("rotation-val").textContent = this.value + "°";
+        socket.emit("rotation", Number(this.value));
+      });
+
+      document.getElementById("diameter").addEventListener("input", function () {
+        document.getElementById("diameter-val").textContent = this.value;
+        socket.emit("diameter", Number(this.value));
+      });
+    </script>
+  </body>
+</html>

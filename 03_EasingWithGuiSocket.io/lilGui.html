@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sketch Controller</title>
+    <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.umd.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+      .lil-gui {
+        --width: 400px;
+        --widget-height: 40px;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      // ── 1. Params ────────────────────────────────────────────────────────────
+      const params = {
+        server: "http://localhost:8080",
+        status: "⬤ disconnected",
+        easingfunction: "easeOutQuad",
+        color: "#ff0000",
+        duration: 1000,
+        rotation: 0,
+        diameter: 200,
+      };
+
+      const easingNames = [
+        "easeLinear",
+        "easeInQuad",
+        "easeOutQuad",
+        "easeInOutQuad",
+        "easeInCubic",
+        "easeOutCubic",
+        "easeInOutCubic",
+        "easeInQuartic",
+        "easeOutQuartic",
+        "easeInOutQuartic",
+        "easeInQuintic",
+        "easeOutQuintic",
+        "easeInOutQuintic",
+        "easeInSine",
+        "easeOutSine",
+        "easeInOutSine",
+        "easeInExpo",
+        "easeOutExpo",
+        "easeInOutExpo",
+        "easeInCirc",
+        "easeOutCirc",
+        "easeInOutCirc",
+        "easeInElastic",
+        "easeOutElastic",
+        "easeInOutElastic",
+        "easeInBack",
+        "easeOutBack",
+        "easeInOutBack",
+        "easeInBounce",
+        "easeOutBounce",
+        "easeInOutBounce",
+      ];
+
+      // ── 2. Socket connection ─────────────────────────────────────────────────
+      let socket;
+      let statusController;
+
+      function setStatus(msg) {
+        params.status = msg;
+        statusController?.updateDisplay();
+      }
+
+      function connect() {
+        if (socket) socket.disconnect();
+        setStatus("⬤ connecting…");
+        socket = io(params.server, { transports: ["websocket"] });
+        socket.on("connect", () => setStatus("⬤ connected"));
+        socket.on("disconnect", () => setStatus("⬤ disconnected"));
+        socket.on("connect_error", () => setStatus("⬤ error"));
+      }
+
+      // ── 3. GUI ───────────────────────────────────────────────────────────────
+      const gui = new lil.GUI({ title: "Sketch Controller" });
+
+      function send(key, value) {
+        socket?.emit(key, value);
+      }
+
+      gui.add(params, "server").name("Server URL").onFinishChange(connect);
+      statusController = gui.add(params, "status").name("").disable();
+
+      gui.add(params, "easingfunction", easingNames).onChange((v) => send("easingfunction", v));
+
+      gui.add(params, "duration", 100, 3000, 50).onChange((v) => send("duration", v));
+
+      gui.addColor(params, "color").onChange((v) => send("color", v));
+
+      gui.add(params, "rotation", 0, 360, 10).onFinishChange((v) => send("rotation", v));
+
+      gui.add(params, "diameter", 0, 800, 1).onFinishChange((v) => send("diameter", v));
+
+      // ── 4. Connect on load ───────────────────────────────────────────────────
+      connect();
+    </script>
+  </body>
+</html>
