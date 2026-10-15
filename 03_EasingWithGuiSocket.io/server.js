@@ -1,50 +1,20 @@
-// server.js — Socket.io relay + static file server
-// Install: npm install
-// Run locally:  node server.js
-// Deploy:       push to GitHub, connect repo to Render as a Web Service
-
+const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
-const fs = require("fs");
 const path = require("path");
 
 const PORT = process.env.PORT || 8080;
+const app = express();
+app.use(express.static(__dirname));
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
-// ── Static file server ───────────────────────────────────────────────────────
-// Needed on Render (no Live Server). Serves everything in the project folder.
-const MIME_TYPES = {
-  ".html": "text/html",
-  ".js": "text/javascript",
-  ".css": "text/css",
-  ".json": "application/json",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-};
-
-const httpServer = createServer((req, res) => {
-  let filePath = path.join(__dirname, req.url === "/" ? "index.html" : req.url);
-  const ext = path.extname(filePath);
-  const contentType = MIME_TYPES[ext] || "text/plain";
-
-  fs.readFile(filePath, (err, data) => {
-    if (err) {
-      res.writeHead(404);
-      res.end("Not found");
-    } else {
-      res.writeHead(200, { "Content-Type": contentType });
-      res.end(data);
-    }
-  });
-});
-
-// ── Socket.io relay ──────────────────────────────────────────────────────────
-const io = new Server(httpServer, {
-  cors: { origin: "*" },
-});
+const httpServer = createServer(app);
+const io = new Server(httpServer, { cors: { origin: "*" } });
 
 io.on("connection", (socket) => {
-  console.log(`[+] connected  (total: ${io.engine.clientsCount})`);
+  console.log(`[+] connected (total: ${io.engine.clientsCount})`);
 
+  // Relay every event to all other clients
   socket.onAny((event, value) => {
     socket.broadcast.emit(event, value);
   });
@@ -54,7 +24,4 @@ io.on("connection", (socket) => {
   });
 });
 
-httpServer.listen(PORT, () => {
-  console.log(`\n✅ Server running on port ${PORT}`);
-  console.log(`   Local: http://localhost:${PORT}`);
-});
+httpServer.listen(PORT, () => console.log(`✅ Running on port ${PORT}`));
